@@ -164,6 +164,11 @@ const addRole = () => {
 };
 //function for adding an employee
 const addEmployee = () => {
+    const roleChoices = () => connection.promise().query(`SELECT * FROM role`)
+        .then((rows) => {
+            let arrTitle = rows[0].map(obj => obj.title);
+            return arrTitle
+        })
     inquirer
         .prompt([
             {
@@ -177,23 +182,21 @@ const addEmployee = () => {
                 name: "name_last"
             },
             {
-                type: "number",
-                message: "Enter the number for role ID.",
+                type: "list",
+                message: "Which role is this?",
                 name: "addRole",
+                choices: roleChoices
             }
         ]).then(ans => {
-            connection.query(`INSERT INTO employee(name_first, name_last, role_id)
-                    VALUES(?, ?, ?)`, [ans.name_first, ans.name_last, ans.addRole ], (err, results) => {
-                if (err) {
-                    console.log(err)
-                } else {
-                    connection.query(`SELECT * FROM employee`, (err, results) => {
-                        err ? console.error(err) : console.table(results);
-                        startUp();
-                    })
-                }
-            }
-            )
+            connection.promise().query(`SELECT id FROM role WHERE title = ?`, ans.addRole)
+                .then(answer => {
+                    let mappedId = answer[0].map(obj => obj.id);
+                    return mappedId[0]
+                })
+                .then((mappedId) => {
+                    connection.promise().query(`INSERT INTO employee(name_first, name_last, role_id)
+                VALUES(?, ?, ?)`, [ans.name_first, ans.name_last, mappedId]);
+                })
         })
 };
 //function to update an employee 
