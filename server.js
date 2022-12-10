@@ -153,7 +153,6 @@ const addRole = () => {
             connection.promise().query(`SELECT id FROM department WHERE name = ?`, ans.addDept)
                 .then(answer => {
                     let mappedId = answer[0].map(obj => obj.id);
-                    // console.log(mappedId[0])
                     return mappedId[0]
                 })
                 .then((mappedId) => {
@@ -169,17 +168,17 @@ const addEmployee = () => {
         .prompt([
             {
                 type: "input",
-                message: "What is the employee's first name?",
-                name: "firstName"
+                message: "Enter the employee's first name?",
+                name: "name_first"
             },
             {
                 type: "input",
-                message: "What is the employee's last name?",
-                name: "lastName"
+                message: "Enter the employee's last name?",
+                name: "name_last"
             },
         ]).then(ans => {
             connection.query(`INSERT INTO employee(name_first, name_last)
-                    VALUES(?, ?)`, [ans.firstName, ans.lastName], (err, results) => {
+                    VALUES(?, ?)`, [ans.name_first, ans.name_last], (err, results) => {
                 if (err) {
                     console.log(err)
                 } else {
@@ -208,7 +207,7 @@ updateEmployee = () => {
     ]).then(function (response) {
         connection.query("UPDATE employee SET manager_id = ? WHERE name_first = ?", [response.manager_id, response.name_first], function (err, data) {
             if (err) throw err;
-            console.log("The new manager's id entered has been added successfully to the database.");
+            console.log("The new manager's id has been entered.");
 
             connection.query(`SELECT * FROM employee`, (err, result) => {
                 if (err) {
