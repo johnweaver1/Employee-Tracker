@@ -176,9 +176,14 @@ const addEmployee = () => {
                 message: "Enter the employee's last name?",
                 name: "name_last"
             },
+            {
+                type: "number",
+                message: "Enter the number for role ID.",
+                name: "addRole",
+            }
         ]).then(ans => {
-            connection.query(`INSERT INTO employee(name_first, name_last)
-                    VALUES(?, ?)`, [ans.name_first, ans.name_last], (err, results) => {
+            connection.query(`INSERT INTO employee(name_first, name_last, role_id)
+                    VALUES(?, ?, ?)`, [ans.name_first, ans.name_last, ans.addRole ], (err, results) => {
                 if (err) {
                     console.log(err)
                 } else {
