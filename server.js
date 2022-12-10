@@ -196,6 +196,7 @@ const addEmployee = () => {
                 .then((mappedId) => {
                     connection.promise().query(`INSERT INTO employee(name_first, name_last, role_id)
                 VALUES(?, ?, ?)`, [ans.name_first, ans.name_last, mappedId]);
+                startUp();
                 })
         })
 };
