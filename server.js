@@ -1,5 +1,6 @@
 //Using mysql12!
 const mysql = require('mysql2')
+const express = require('express');
 // To use Inquirer
 const inquirer = require('inquirer');
 // Using the .env file to bring my password without sharing to the whole web
@@ -11,6 +12,11 @@ const connection = mysql.createConnection({
     password: process.env.PASSWORD,
     database: 'employee_db'
   });
+
+  // Express middleware
+const app = express();
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
   
   connection.connect(err=>{
     if (err) throw err;
@@ -72,11 +78,146 @@ const connection = mysql.createConnection({
         }
     })
   }
-  //Functions for dispalying my departments!
-  displayDepartments = () => {
+  //Function for dispalying my departments!
+  const displayDepartments = () => {
     console.log('Showing all departments...\n');
     connection.query(`SELECT * FROM department`, (err, results) => {
         err ? console.error(err) : console.table(results);
         startUp();
     });
+};
+//Function for dispalying my roles!
+const displayRoles = () => {
+    connection.query(`SELECT * FROM role`, (err, results) => {
+        err ? console.error(err) : console.table(results); 
+        startUp();
+    })
+};
+//Function for displaying Employees
+const displayEmployees = () => {
+    connection.query(`SELECT * FROM employee`, (err, results) => {
+        err ? console.error(err) : console.table(results); 
+        startUp();
+    })
+};
+//Function for adding a department
+const addDepartment = () => {
+    inquirer
+        .prompt([
+            {
+                type: "input",
+                message: "Enter the name of the Department you wish to add?",
+                name: "addDept"
+            }
+        ]).then(ans => {
+            connection.query(`INSERT INTO department(name)
+                    VALUES(?)`, ans.addDept, (err, results) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    connection.query(`SELECT * FROM department`, (err, results) => {
+                        err ? console.error(err) : console.table(results);
+                        startUp();
+                    })
+                }
+            }
+            )
+        })
+};
+//function for adding a role
+const addRole = () => {
+    const deptChoices = () => connection.promise().query(`SELECT * FROM department`)
+        .then((rows) => {
+            let arrNames = rows[0].map(obj => obj.name);
+            return arrNames
+        })
+    inquirer
+        .prompt([
+            {
+                type: "input",
+                message: "What is the title of the role you'd like to add?",
+                name: "roleTitle"
+            },
+            {
+                type: "input",
+                message: "What is the salary for this role?",
+                name: "roleSalary"
+            },
+            {
+                type: "list",
+                message: "Which department is this role in?",
+                name: "addDept",
+                choices: deptChoices
+            }
+        ]).then(ans => {
+            connection.promise().query(`SELECT id FROM department WHERE name = ?`, ans.addDept)
+                .then(answer => {
+                    let mappedId = answer[0].map(obj => obj.id);
+                    // console.log(mappedId[0])
+                    return mappedId[0]
+                })
+                .then((mappedId) => {
+                    connection.promise().query(`INSERT INTO role(title, salary, department_id)
+                VALUES(?, ?, ?)`, [ans.roleTitle, ans.roleSalary, mappedId]);
+                    startUp();
+                })
+        })
+};
+//function for adding an employee
+const addEmployee = () => {
+    inquirer
+        .prompt([
+            {
+                type: "input",
+                message: "What is the employee's first name?",
+                name: "firstName"
+            },
+            {
+                type: "input",
+                message: "What is the employee's last name?",
+                name: "lastName"
+            },
+        ]).then(ans => {
+            connection.query(`INSERT INTO employee(name_first, name_last)
+                    VALUES(?, ?)`, [ans.firstName, ans.lastName], (err, results) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    connection.query(`SELECT * FROM employee`, (err, results) => {
+                        err ? console.error(err) : console.table(results);
+                        startUp();
+                    })
+                }
+            }
+            )
+        })
+};
+//function to update an employee 
+updateEmployee = () => {
+    inquirer.prompt([
+        {
+            name: "name_first",
+            type: "input",
+            message: "Please enter the first name of the employee you want update in the database."
+        },
+        {
+            name: "manager_id",
+            type: "number",
+            message: "Please enter the new manager's id number associated with the employee you want to update in the database. Enter ONLY numbers."
+        }
+    ]).then(function (response) {
+        connection.query("UPDATE employee SET manager_id = ? WHERE name_first = ?", [response.manager_id, response.name_first], function (err, data) {
+            if (err) throw err;
+            console.log("The new manager's id entered has been added successfully to the database.");
+
+            connection.query(`SELECT * FROM employee`, (err, result) => {
+                if (err) {
+                    res.status(500).json({ error: err.message })
+                    startPrompt();
+                }
+                console.table(result);
+                startUp();
+            });
+        })
+});
 };
